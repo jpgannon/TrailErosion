@@ -1,0 +1,53 @@
+---
+title: "Data Combination"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+```
+
+## Prepare 24-25 data
+
+```{r}
+F24_raw <- read_csv("data/Core_Tread_FS2425.csv") |>
+  select(Transect, Measurement, Depth_Measurement) |>
+  group_by(Transect) |>
+  mutate(Depth_cm = Depth_Measurement - Depth_Measurement[1]) |>
+  mutate(Trail_Width = max(Measurement))
+
+```
+
+Read in older data, combine
+
+```{r}
+F21 <- read_csv("data/CoreTread_F21.csv") |>
+  select(Transect, Trail_Width, Measurement_Point,
+         Depth_Measurement) |>
+  mutate(Date = "F2021")
+
+S22 <- read_csv("data/CoreTread_S22.csv") |>
+  select(Transect, Trail_Width, Measurement_Point,
+         Depth_Measurement)|>
+  mutate(Date = "S2022")
+
+AY2425 <- F24_raw |>
+  select(Transect, Trail_Width, 
+         Measurement_Point = Measurement,
+         Depth_Measurement = Depth_cm)|>
+  mutate(Date = "AY2425") |>
+  mutate(Transect = as.numeric(Transect))
+
+All_Measurements <- bind_rows(F21, S22, AY2425) |>
+  drop_na(Measurement_Point)
+
+All_Measurements$Transect[4140:4176] <- 51
+
+All_Measurements_long <- drop_na(All_Measurements, Transect)
+
+All_Measurements_wide <- All_Measurements_long |>
+  select(-Trail_Width)|>
+  pivot_wider(names_from = Date,
+              values_from = Depth_Measurement)
+```
