@@ -11,11 +11,11 @@ library(tidyverse)
 ## Prepare 24-25 data
 
 ```{r}
-F24_raw <- read_csv("data/Core_Tread_FS2425.csv") |>
-  select(Transect, Measurement, Depth_Measurement) |>
-  group_by(Transect) |>
-  mutate(Depth_cm = Depth_Measurement - Depth_Measurement[1]) |>
-  mutate(Trail_Width = max(Measurement))
+F24_raw <- read_csv("data/Final Data Collection Fall 2024-Spring 2025.csv") |>
+  select(Transect, Term, Measurement, Depth_cm = Depth) #|>
+  #group_by(Transect) |>
+  #mutate(
+  #  Depth_cm = Depth_Measurement -Depth_Measurement[1]#) 
 
 ```
 
@@ -33,21 +33,26 @@ S22 <- read_csv("data/CoreTread_S22.csv") |>
   mutate(Date = "S2022")
 
 AY2425 <- F24_raw |>
-  select(Transect, Trail_Width, 
+  select(Transect, Term,
          Measurement_Point = Measurement,
          Depth_Measurement = Depth_cm)|>
-  mutate(Date = "AY2425") |>
-  mutate(Transect = as.numeric(Transect))
+  mutate(Date = Term) |>
+  mutate(Transect = as.numeric(Transect)) |>
+  select(-Term)
 
 All_Measurements <- bind_rows(F21, S22, AY2425) |>
   drop_na(Measurement_Point)
-
-All_Measurements$Transect[4140:4176] <- 51
 
 All_Measurements_long <- drop_na(All_Measurements, Transect)
 
 All_Measurements_wide <- All_Measurements_long |>
   select(-Trail_Width)|>
   pivot_wider(names_from = Date,
-              values_from = Depth_Measurement)
+              values_from = Depth_Measurement,
+              values_fn = mean) |>
+  drop_na(F2021) |>
+  group_by(Transect) |>
+  mutate(F24 = F24 - F24[1],
+         S25 = S25 - S25[1])
+
 ```
