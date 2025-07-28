@@ -45,6 +45,7 @@ All_Measurements <- bind_rows(F21, S22, AY2425) |>
 
 All_Measurements_long <- drop_na(All_Measurements, Transect)
 
+#need to do depth adjustment here because otherwise there are measurments before the trail starts. So first get rid of the values that weren't measured the first time by dropping the f2021 NAs, then use the first value for each transect to zero out the measurements
 All_Measurements_wide <- All_Measurements_long |>
   select(-Trail_Width)|>
   pivot_wider(names_from = Date,
@@ -52,7 +53,43 @@ All_Measurements_wide <- All_Measurements_long |>
               values_fn = mean) |>
   drop_na(F2021) |>
   group_by(Transect) |>
-  mutate(F24 = F24 - F24[1],
-         S25 = S25 - S25[1])
+  mutate(F2024 = F24 - F24[1],
+         S2025 = S25 - S25[1]) |>
+  select(-F24, -S25)
 
+
+```
+
+Add changes
+
+```{r}
+Change_at_each_measure <- All_Measurements_wide |>
+  mutate(
+    F2021_to_S2022 = F2021 - S2022,
+    F2021_to_F2024 = F2021 - F2024,
+    F2021_to_S2025 = F2021 - S2025,
+    S2022_to_F2024 = S2022 - F2024,
+    S2022_to_S2025 = S2022 - S2025
+  )|>
+  select(-c(F2021, S2022, F2024, S2025))
+  
+Summary_Change_by_Transect <- 
+  Change_at_each_measure |>
+  mutate(
+    F2021_to_S2022 = F2021_to_S2022 * 10,
+    F2021_to_F2024 = F2021_to_F2024 * 10,
+    F2021_to_S2025 = F2021_to_S2025 * 10,
+    S2022_to_F2024 = S2022_to_F2024 * 10,
+    S2022_to_S2025 = S2022_to_S2025 * 10
+  ) |>
+  group_by(Transect) |>
+  summarize(
+    F2021_to_S2022_cm2 = sum(F2021_to_S2022),
+    F2021_to_F2024_cm2 = sum(F2021_to_F2024),
+    F2021_to_S2025_cm2 = sum(F2021_to_S2025),
+    S2022_to_F2024_cm2 = sum(S2022_to_F2024),
+    S2022_to_S2025_cm2 = sum(S2022_to_S2025)
+  )
+
+write_csv(Summary_Change_by_Transect, "total change by transect in cm2.csv")
 ```
