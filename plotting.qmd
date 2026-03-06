@@ -1,0 +1,100 @@
+---
+title: "plotting"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+## 
+```{r}
+library(tidyverse)
+transects <- read_csv("all_measurements_long.csv")
+
+transects <- transects |> 
+  mutate(measured = case_when(
+    name == "F2021" ~ "t1",
+    name == "S2022" ~ "t2",
+    name == "F2024" ~ "t3",
+    name == "S2025" ~ "t4"
+  )) |>
+  mutate(period = case_when(
+    name == "F2021" ~ "p1",
+    name == "S2022" ~ "p1",
+    name == "F2024" ~ "p2",
+    name == "S2025" ~ "p2"
+  ))
+  
+
+transects |>
+  filter(Transect <= 12) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+  
+```
+
+```{r}
+transects |>
+  filter(Transect > 12 & Transect <= 24 ) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```
+```{r}
+transects |>
+  filter(Transect > 24 & Transect <= 36 ) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```
+
+```{r}
+transects |>
+  filter(Transect > 36 & Transect <= 48 ) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```
+
+```{r}
+
+transects |>
+  filter(Transect > 48 & Transect <= 60 ) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```
+
+```{r}
+
+transects |>
+  filter(Transect > 60 & Transect <= 72 ) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured,
+                      linetype = period))+
+  geom_line()+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```

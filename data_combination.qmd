@@ -57,7 +57,12 @@ All_Measurements_wide <- All_Measurements_long |>
          S2025 = S25 - S25[1]) |>
   select(-F24, -S25)
 
+All_measurements_long_adj <- All_Measurements_wide |>
+  pivot_longer(cols = c(F2021, S2022, F2024, S2025))
 
+
+
+write_csv(All_measurements_long_adj, "all_measurements_long.csv")
 ```
 
 Add changes
@@ -65,11 +70,11 @@ Add changes
 ```{r}
 Change_at_each_measure <- All_Measurements_wide |>
   mutate(
-    F2021_to_S2022 = F2021 - S2022,
-    F2021_to_F2024 = F2021 - F2024,
-    F2021_to_S2025 = F2021 - S2025,
-    S2022_to_F2024 = S2022 - F2024,
-    S2022_to_S2025 = S2022 - S2025
+    F2021_to_S2022 =  S2022 - F2021,
+    F2021_to_F2024 =  F2024 - F2021,
+    F2021_to_S2025 =  S2025 - F2021,
+    S2022_to_F2024 =  F2024 - S2022,
+    S2022_to_S2025 =  S2025 - S2022
   )|>
   select(-c(F2021, S2022, F2024, S2025))
   
@@ -92,4 +97,11 @@ Summary_Change_by_Transect <-
   )
 
 write_csv(Summary_Change_by_Transect, "total change by transect in cm2.csv")
+
+diff_at_each_meas <- pivot_longer(Change_at_each_measure, 
+                                  cols = -c("Transect", "Measurement_Point"))
+
+
+
+write_csv(diff_at_each_meas, "diff_at_each_measurement.csv")
 ```

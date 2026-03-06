@@ -1,0 +1,137 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(ggforce)
+diffs <- read_csv("diff_at_each_measurement.csv")
+
+diffs <- diffs |> 
+  mutate(measured = case_when(
+    name == "F2021_to_S2022" ~ "Diff F21 to F22",
+    name == "F2021_to_F2024" ~ "Diff F21 to 24-25",
+    name == "F2021_to_S2025" ~ "Diff F21 to 24-25"
+  )) 
+
+diffs <- diffs |>
+  group_by(Transect)|>
+  mutate(Raw_meas_point = Measurement_Point)|>
+  mutate(Measurement_Point =
+           Measurement_Point - Measurement_Point[1])
+```
+
+```{r}
+
+diffs |>
+  drop_na(value, measured) |>
+  filter(Transect <= 12) |>
+ggplot(aes(x = Measurement_Point, 
+                      y = value,
+                      color = measured))+
+  geom_line()+
+  geom_hline(yintercept = 0)+
+  facet_wrap(facets = "Transect",scales = "free" )+
+  theme_classic()
+```
+
+```{r}
+# ---- settings ----
+out_file <- "transects_3x3_pages.pdf"  # output PDF
+nrow_grid <- 3
+ncol_grid <- 3
+per_page  <- nrow_grid * ncol_grid
+
+# total number of pages required
+n_pages <- ceiling(n_distinct(diffs$Transect) / per_page)
+
+# open PDF device
+pdf(out_file, width = 10, height = 8)
+
+for (i in seq_len(n_pages)) {
+  p <- diffs |>
+    drop_na(value, measured) |>
+    ggplot(aes(x = Measurement_Point,
+               y = value,
+               color = measured)) +
+    geom_line() +
+    geom_hline(yintercept = 0) +
+    ggforce::facet_wrap_paginate(
+      facets = vars(Transect),
+      scales = "free",
+      nrow = nrow_grid, ncol = ncol_grid,
+      page = i
+    ) +
+    scale_y_continuous(limits = c(-20, 20)) +  # y axis fixed
+    scale_x_continuous(limits = c(0, 125)) +  # y axis fixed
+    theme_classic() +
+    ggtitle(paste("Transects • Page", i, "of", n_pages))
+
+  print(p)  # one page per plot
+}
+
+dev.off()
+
+cat("Saved:", normalizePath(out_file), "\n")
+```
+with erosion vals
+```{r}
+library(ggplot2)
+library(ggforce)
+library(dplyr)
+
+totchange <- read_csv("total change by transect in cm2.csv")
+
+# ---- inputs ----
+# diffs: long data with columns Transect, Measurement_Point, value, measured
+# erosion_df: per-transect totals with columns Transect, erosion
+
+out_file  <- "transects_3x3_pages.pdf"
+nrow_grid <- 3
+ncol_grid <- 3
+per_page  <- nrow_grid * ncol_grid
+
+# make sure we only label transects that exist in diffs (and order them)
+transect_levels <- diffs |> distinct(Transect) |> arrange(Transect) |> pull(Transect)
+
+# build a named vector mapping Transect -> label text for the facet strips
+lab_tbl <- totchange |>
+  filter(Transect %in% transect_levels) |>
+  mutate(.lab = paste0("Transect ", Transect, "\nErosion (cm2) F21-F24_25: ", round(F2021_to_F2024_cm2, 2)))
+
+lab_map <- setNames(lab_tbl$.lab, lab_tbl$Transect)
+
+
+n_pages <- ceiling(length(transect_levels) / per_page)
+
+pdf(out_file, width = 10, height = 8)
+
+for (i in seq_len(n_pages)) {
+  p <- diffs |>
+    drop_na(value, measured) |>
+    ggplot(aes(x = Measurement_Point, y = value, color = measured)) +
+    geom_line() +
+    geom_hline(yintercept = 0) +
+    ggforce::facet_wrap_paginate(
+      facets  = vars(Transect),
+      labeller = labeller(Transect = lab_map),  # <<< add erosion in strip
+      scales  = "free_x",
+      nrow    = nrow_grid,
+      ncol    = ncol_grid,
+      page    = i
+    ) +
+    coord_cartesian(ylim = c(-20, 20)) +        # keep y fixed to [-20, 20] without dropping data
+    theme_classic() +
+    ggtitle(paste("Transects • Page", i, "of", n_pages))
+
+  print(p)
+}
+
+dev.off()
+
+cat("Saved:", normalizePath(out_file), "\n")
+
+```
+
